@@ -1,0 +1,31 @@
+User Join/Leave Notifications
+
+"Ayush has joined the chat"
+
+"Sneha left the group"
+
+Display List of Online Users
+
+Group Message Timestamps
+
+Private (1-to-1) Messaging
+
+Chat History Persistence (MongoDB)
+
+Better UI with Bootstrap or Tailwind
+
+Typing Indicator
+
+“Sneha is typing...”
+
+Upload/Send Images or Files
+
+Emoji Support
+
+Admin Controls
+
+Kick user, mute user, clear chat, etc.
+
+Authentication Fixes (JWT sessions)
+
+Fixing Errors or Crashes (e.g. on message emit)
