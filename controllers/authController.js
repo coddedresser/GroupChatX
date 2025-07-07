@@ -6,18 +6,24 @@ exports.getRegister = (req, res) => {
 };
 
 // POST Register
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = 'lcnsldgmlsm';
+
 exports.postRegister = async (req, res) => {
   const { username, email, password } = req.body;
   try {
     const user = new User({ username, email, password });
     await user.save();
-    req.session.user = user;
+
+    const token = jwt.sign({ id: user._id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+    res.cookie('token', token, { httpOnly: true });
     res.redirect('/dashboard');
   } catch (err) {
     console.error(err);
     res.redirect('/register');
   }
 };
+
 
 // GET Login
 exports.getLogin = (req, res) => {
@@ -32,7 +38,7 @@ exports.postLogin = async (req, res) => {
     if (!user || !(await user.comparePassword(password))) {
       return res.redirect('/login');
     }
-    req.session.user = user;
+    req.user = user;
     res.redirect('/dashboard');
   } catch (err) {
     console.error(err);
@@ -42,7 +48,7 @@ exports.postLogin = async (req, res) => {
 
 // Logout
 exports.logout = (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/login');
-  });
+  res.clearCookie('token');
+  res.redirect('/login');
 };
+

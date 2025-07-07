@@ -1,8 +1,4 @@
-User Join/Leave Notifications
-
-"Ayush has joined the chat"
-
-"Sneha left the group"
+User Join/Leave Notifications --done
 
 Display List of Online Users
 
@@ -16,16 +12,14 @@ Better UI with Bootstrap or Tailwind
 
 Typing Indicator
 
-“Sneha is typing...”
-
 Upload/Send Images or Files
 
 Emoji Support
 
-Admin Controls
+Admin Controls --- Kick user, mute user, clear chat, etc.
 
-Kick user, mute user, clear chat, etc.
+Authentication Fixes (JWT sessions) --done
 
-Authentication Fixes (JWT sessions)
+Fixing Errors or Crashes (e.g. on message emit) --done
 
-Fixing Errors or Crashes (e.g. on message emit)
+

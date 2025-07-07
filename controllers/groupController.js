@@ -4,7 +4,7 @@ const Message = require('../models/Message');
 const { nanoid } = require('nanoid');
 
 exports.getCreateGroup = (req, res) => {
-  res.render('create-group', { user: req.session.user });
+  res.render('create-group', { user: req.user });
 };
 
 exports.postCreateGroup = async (req, res) => {
@@ -14,12 +14,12 @@ exports.postCreateGroup = async (req, res) => {
     const group = new Group({
       name,
       groupId,
-      members: [req.session.user._id],
+      members: [req.user._id],
     });
 
     await group.save();
 
-    const user = await User.findById(req.session.user._id);
+    const user = await User.findById(req.user._id);
     user.groups.push(group._id);
     await user.save();
 
@@ -40,7 +40,7 @@ exports.getGroupChat = async (req, res) => {
     if (!group) return res.redirect('/dashboard');
 
     res.render('group-chat', {
-      user: req.session.user,
+      user: req.user,
       group,
       messages,
     });

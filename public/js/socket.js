@@ -1,47 +1,73 @@
 const socket = io();
+
+// Elements
+const chatForm = document.getElementById('chat-form');
+const chatBox = document.getElementById('chat-box');
+const activeUsers = document.getElementById('active-users');
 const username = document.getElementById('username').value;
 const groupId = document.getElementById('groupId').value;
 
-const chatBox = document.getElementById('chat-box');
-const chatForm = document.getElementById('chat-form');
-const messageInput = document.getElementById('message');
-const userList = document.getElementById('active-users');
-
-// Join group room
+// Emit joinGroup when page loads
 socket.emit('joinGroup', { username, groupId });
 
-// Update active users list
-socket.on('userList', (users) => {
-  userList.innerHTML = '';
-  users.forEach(user => {
-    const li = document.createElement('li');
-    li.className = 'list-group-item';
-    li.textContent = user;
-    userList.appendChild(li);
-  });
+// Receive messages from others
+socket.on('receiveMessage', ({ message, sender }) => {
+  const msg = document.createElement('div');
+  msg.innerHTML = `<strong>${sender}:</strong> ${message}`;
+  chatBox.appendChild(msg);
+  chatBox.scrollTop = chatBox.scrollHeight;
 });
 
-// Receive and display messages
-socket.on('receiveMessage', ({ message, sender }) => {
-  const msgDiv = document.createElement('div');
-  msgDiv.innerHTML = `<strong>${sender}:</strong> ${message}`;
-  chatBox.appendChild(msgDiv);
+// Receive user joined notification
+socket.on('userJoined', (msg) => {
+  const note = document.createElement('div');
+  note.innerHTML = `<em style="color: green;">🟢 ${msg}</em>`;
+  chatBox.appendChild(note);
   chatBox.scrollTop = chatBox.scrollHeight;
+});
+
+// Receive user left notification
+socket.on('userLeft', (msg) => {
+  const note = document.createElement('div');
+  note.innerHTML = `<em style="color: red;">🔴 ${msg}</em>`;
+  chatBox.appendChild(note);
+  chatBox.scrollTop = chatBox.scrollHeight;
+});
+
+// Update active user list
+socket.on('userList', (userList) => {
+  activeUsers.innerHTML = '';
+  userList.forEach(user => {
+    const li = document.createElement('li');
+    li.className = 'list-group-item';
+    li.innerText = user;
+    activeUsers.appendChild(li);
+  });
 });
 
 // Send message
 chatForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const msg = messageInput.value;
-  if (!msg.trim()) return;
+  const messageInput = document.getElementById('message');
+  const message = messageInput.value.trim();
+  if (message) {
+    socket.emit('sendMessage', {
+      groupId,
+      message,
+      sender: username
+    });
 
-  socket.emit('sendMessage', { groupId, message: msg, sender: username });
+    // Show your own message immediately
+    const msg = document.createElement('div');
+    msg.innerHTML = `<strong>You:</strong> ${message}`;
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-  // Show own message instantly
-  const selfMsg = document.createElement('div');
-  selfMsg.innerHTML = `<strong>You:</strong> ${msg}`;
-  chatBox.appendChild(selfMsg);
-  chatBox.scrollTop = chatBox.scrollHeight;
+    messageInput.value = '';
+  }
+});
 
-  messageInput.value = '';
+// Leave group on page unload
+window.addEventListener('beforeunload', () => {
+  socket.emit('leaveGroup', { username, groupId });
 });

@@ -3,7 +3,7 @@ const Group = require('../models/Group');
 
 exports.getDashboard = async (req, res) => {
   try {
-    const user = await User.findById(req.session.user._id).populate('groups');
+    const user = await User.findById(req.user.id).populate('groups');
     res.render('dashboard', { user });
   } catch (err) {
     console.error(err);
@@ -17,7 +17,7 @@ exports.joinGroup = async (req, res) => {
     const group = await Group.findOne({ groupId });
     if (!group) return res.redirect('/dashboard');
 
-    const user = await User.findById(req.session.user._id);
+    const user = await User.findById(req.user.id);
 
     // Avoid duplicates
     if (!user.groups.includes(group._id)) {

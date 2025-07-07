@@ -9,58 +9,107 @@ const dotenv = require('dotenv');   //done
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const groupRoutes = require('./routes/groupRoutes');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
+// Config
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
+const SECRET_KEY = 'lcnsldgmlsm';
+
+// Middleware
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 mongoose.connect(process.env.MongodbURL, {
   useNewUrlParser: true,
   useUnifiedTopology: true
-}).then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+}).then(() => console.log('✅ MongoDB connected'))
+  .catch((err) => console.error('❌ MongoDB connection error:', err));
 
+
+
+// View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-app.use(session({
-    secret: 'supersecret',
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MongodbURL })
-}));
 
 // Routes
 app.use('/', authRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/group', groupRoutes);
 
-// Socket.IO logic
+// =========================
+// 🔐 Socket.IO JWT Auth
+// =========================
 const usersInRoom = {};
 
-io.on('connection', (socket) => {
-    socket.on('joinGroup', ({ username, groupId }) => {
-        socket.join(groupId);
-        if (!usersInRoom[groupId]) usersInRoom[groupId] = [];
-        usersInRoom[groupId].push(username);
-        io.to(groupId).emit('userList', usersInRoom[groupId]);
-    });
+io.use((socket, next) => {
+  const cookieHeader = socket.handshake.headers.cookie;
+  if (!cookieHeader) return next(new Error('Authentication error'));
 
-    socket.on('sendMessage', ({ groupId, message, sender }) => {
-        io.to(groupId).emit('receiveMessage', { message, sender });
-    });
+  const token = cookieHeader.split(';').find(c => c.trim().startsWith('token='));
+  if (!token) return next(new Error('JWT token not found'));
 
-    socket.on('leaveGroup', ({ username, groupId }) => {
-        socket.leave(groupId);
-        usersInRoom[groupId] = usersInRoom[groupId].filter(u => u !== username);
-        io.to(groupId).emit('userList', usersInRoom[groupId]);
-    });
+  try {
+    const jwtToken = token.split('=')[1];
+    const user = jwt.verify(jwtToken, SECRET_KEY);
+    socket.user = user; // Attach user info to socket
+    next();
+  } catch (err) {
+    return next(new Error('Invalid token'));
+  }
 });
 
+io.on('connection', (socket) => {
+  const username = socket.user.username;
+  console.log(`✅ User connected: ${username}`);
+
+  socket.on('joinGroup', ({ groupId }) => {
+    socket.join(groupId);
+
+    // Add user to group
+    if (!usersInRoom[groupId]) usersInRoom[groupId] = new Set();
+    usersInRoom[groupId].add(username);
+
+    // Notify others in the room
+    socket.to(groupId).emit('userJoined', `${username} has joined the group`);
+    
+    // Send updated user list to all clients in the group
+    io.to(groupId).emit('userList', Array.from(usersInRoom[groupId]));
+  });
+
+  socket.on('sendMessage', ({ groupId, message }) => {
+    socket.broadcast.to(groupId).emit('receiveMessage', { message, sender: username });
+  });
+
+  socket.on('leaveGroup', ({ groupId }) => {
+    socket.leave(groupId);
+    if (usersInRoom[groupId]) {
+      usersInRoom[groupId].delete(username);
+      socket.to(groupId).emit('userLeft', `${username} has left the group`);
+      io.to(groupId).emit('userList', Array.from(usersInRoom[groupId]));
+    }
+  });
+
+  // Optional: handle browser close or refresh
+  socket.on('disconnecting', () => {
+    const rooms = Array.from(socket.rooms).filter(room => room !== socket.id);
+    rooms.forEach(groupId => {
+      if (usersInRoom[groupId]) {
+        usersInRoom[groupId].delete(username);
+        socket.to(groupId).emit('userLeft', `${username} has left the group`);
+        io.to(groupId).emit('userList', Array.from(usersInRoom[groupId]));
+      }
+    });
+  });
+});
+
+
+// Server startup
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
