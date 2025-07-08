@@ -1,22 +1,22 @@
 User Join/Leave Notifications --done
 
-Display List of Online Users
+Display List of Online Users --done
 
-Group Message Timestamps
+Group Message Timestamps --to do later
 
-Private (1-to-1) Messaging
+Private (1-to-1) Messaging --to do later
 
-Chat History Persistence (MongoDB)
+Chat History Persistence (MongoDB) --done
 
-Better UI with Bootstrap or Tailwind
+Better UI with Bootstrap or Tailwind --Working
 
-Typing Indicator
+Typing Indicator --to do later
 
-Upload/Send Images or Files
+Upload/Send Images or Files --to do later
 
-Emoji Support
+Emoji Support --to do later
 
-Admin Controls --- Kick user, mute user, clear chat, etc.
+Admin Controls --- Kick user, mute user, clear chat, etc. --to do later
 
 Authentication Fixes (JWT sessions) --done
 

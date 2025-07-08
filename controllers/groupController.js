@@ -43,6 +43,7 @@ exports.getGroupChat = async (req, res) => {
       user: req.user,
       group,
       messages,
+      users: []
     });
   } catch (err) {
     console.error(err);

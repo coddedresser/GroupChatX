@@ -6,6 +6,7 @@ const User = require('../models/User');
 const SECRET_KEY = 'lcnsldgmlsm';
 
 // GET Register page
+router.get('/',authController.getLogin)
 router.get('/register', authController.getRegister);
 
 // POST Register

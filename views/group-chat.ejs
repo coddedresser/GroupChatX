@@ -4,40 +4,93 @@
   <title><%= group.name %> | Chat</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      background: url('/chat.webp') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .card {
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    form input, form button {
+      border-radius: 8px;
+    }
+
+    h3 {
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
   <%- include('./partials/header', { user }) %>
 
   <div class="container mt-4">
-    <h3>Group: <%= group.name %> (ID: <%= group.groupId %>)</h3>
-
-    <div class="row mt-3">
-      <!-- Chat Area -->
-      <div class="col-md-8">
-        <div id="chat-box" class="border p-3 mb-3" style="height: 400px; overflow-y: scroll; background-color: #f8f9fa;">
-          <% messages.forEach(msg => { %>
-            <div><strong><%= msg.sender.username %>:</strong> <%= msg.text %></div>
-          <% }) %>
-        </div>
-
-        <form id="chat-form">
-          <input type="hidden" id="username" value="<%= user.username %>">
-          <input type="hidden" id="groupId" value="<%= group.groupId %>">
-          <div class="input-group">
-            <input type="text" id="message" class="form-control" placeholder="Type your message..." required />
-            <button class="btn btn-primary">Send</button>
-          </div>
-        </form>
+    <div class="card shadow">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Group: <%= group.name %> <small class="text-muted">(ID: <%= group.groupId %>)</small></h4>
+        <span class="text-muted">Logged in as: <%= user.username %></span>
       </div>
 
-      <!-- Active Users -->
-      <div class="col-md-4">
-        <h5>Active Users</h5>
-        <ul id="active-users" class="list-group"></ul>
+      <div class="card-body row">
+        <!-- Chat Messages -->
+        <div class="col-md-8 border-end">
+          <div id="chat-box" class="mb-3 p-3 rounded bg-light" style="height: 400px; overflow-y: auto;">
+            <% messages.forEach(msg => { %>
+              <div class="mb-2">
+                <strong class="text-primary"><%= msg.sender.username %>:</strong> <%= msg.text %>
+              </div>
+            <% }) %>
+          </div>
+
+          <form id="chat-form" class="input-group">
+            <input type="hidden" id="username" value="<%= user.username %>">
+            <input type="hidden" id="groupId" value="<%= group.groupId %>">
+            <input type="text" id="message" class="form-control" placeholder="Type your message..." required />
+            <button class="btn btn-primary">Send</button>
+          </form>
+        </div>
+
+        <!-- Active Users -->
+        <div class="col-md-4">
+          <h5>Active Users</h5>
+          <ul id="active-users" class="list-group mb-3">
+            <% users.forEach(u => { if (u !== user.username) { %>
+              <li class="list-group-item d-flex justify-content-between align-items-center user-item" data-user="<%= u %>">
+                <%= u %>
+                <button class="btn btn-sm btn-outline-secondary start-private-chat">Chat</button>
+              </li>
+            <% } }) %>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Private Chat Modal -->
+  <div class="modal fade" id="privateChatModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">Private Chat with <span id="privateChatUser"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="private-chat-box" class="border p-2 mb-2 bg-light rounded" style="height: 250px; overflow-y: auto;"></div>
+          <form id="private-chat-form" class="input-group">
+            <input type="text" id="private-message" class="form-control" placeholder="Type a private message" />
+            <button type="submit" class="btn btn-outline-primary">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/js/socket.js"></script>
 </body>
 </html>

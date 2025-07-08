@@ -10,6 +10,18 @@ const groupId = document.getElementById('groupId').value;
 // Emit joinGroup when page loads
 socket.emit('joinGroup', { username, groupId });
 
+// Show old messages
+socket.on('chatHistory', (messages) => {
+  const chatBox = document.getElementById('chat-box');
+  messages.forEach(msg => {
+    const messageElement = document.createElement('div');
+    messageElement.innerHTML = `<strong>${msg.sender.username}:</strong> ${msg.text}`;
+    chatBox.appendChild(messageElement);
+  });
+  chatBox.scrollTop = chatBox.scrollHeight;
+});
+
+
 // Receive messages from others
 socket.on('receiveMessage', ({ message, sender }) => {
   const msg = document.createElement('div');
@@ -70,4 +82,48 @@ chatForm.addEventListener('submit', (e) => {
 // Leave group on page unload
 window.addEventListener('beforeunload', () => {
   socket.emit('leaveGroup', { username, groupId });
+});
+
+// Private chat
+let currentPrivateUser = null;
+
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('user-item')) {
+    currentPrivateUser = e.target.getAttribute('data-user');
+    document.getElementById('privateChatUser').innerText = currentPrivateUser;
+    document.getElementById('private-chat-box').innerHTML = '';
+    socket.emit('loadPrivateChat', { to: currentPrivateUser });
+    new bootstrap.Modal(document.getElementById('privateChatModal')).show();
+  }
+});
+
+document.getElementById('private-chat-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const msg = document.getElementById('private-message').value;
+  if (msg && currentPrivateUser) {
+    socket.emit('privateMessage', { to: currentPrivateUser, message: msg });
+    document.getElementById('private-chat-box').innerHTML += `<div><strong>You:</strong> ${msg}</div>`;
+    document.getElementById('private-message').value = '';
+  }
+});
+
+socket.on('privateMessage', ({ from, message }) => {
+  document.getElementById('private-chat-box').innerHTML += `<div><strong>${from}:</strong> ${message}</div>`;
+});
+
+socket.on('loadPrivateChatHistory', history => {
+  history.forEach(({ from, message }) => {
+    const label = from === socket.username ? 'You' : from;
+    document.getElementById('private-chat-box').innerHTML += `<div><strong>${label}:</strong> ${message}</div>`;
+  });
+});
+
+// When clicking "Chat" button next to a user
+document.querySelectorAll('.start-private-chat').forEach(button => {
+  button.addEventListener('click', function () {
+    const targetUser = this.closest('li').dataset.user;
+    document.getElementById('privateChatUser').textContent = targetUser;
+    const modal = new bootstrap.Modal(document.getElementById('privateChatModal'));
+    modal.show();
+  });
 });
