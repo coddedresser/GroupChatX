@@ -38,13 +38,17 @@ exports.postLogin = async (req, res) => {
     if (!user || !(await user.comparePassword(password))) {
       return res.redirect('/login');
     }
-    req.user = user;
+
+    const token = jwt.sign({ id: user._id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+    res.cookie('token', token, { httpOnly: true });
+
     res.redirect('/dashboard');
   } catch (err) {
     console.error(err);
     res.redirect('/login');
   }
 };
+
 
 // Logout
 exports.logout = (req, res) => {

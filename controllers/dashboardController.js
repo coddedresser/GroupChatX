@@ -4,7 +4,13 @@ const Group = require('../models/Group');
 exports.getDashboard = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate('groups');
-    res.render('dashboard', { user });
+
+    const groupCreated = req.query.groupCreated; // 👈 Get the groupId from query
+
+    res.render('dashboard', {
+      user,
+      groupCreated // 👈 Pass to EJS to display notification
+    });
   } catch (err) {
     console.error(err);
     res.redirect('/login');

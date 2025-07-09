@@ -9,7 +9,8 @@ exports.getCreateGroup = (req, res) => {
 
 exports.postCreateGroup = async (req, res) => {
   const { name } = req.body;
-  const groupId = nanoid(8); // short unique ID
+  const groupId = nanoid(8);
+
   try {
     const group = new Group({
       name,
@@ -18,13 +19,19 @@ exports.postCreateGroup = async (req, res) => {
     });
 
     await group.save();
-    
-    res.redirect(`/group/${groupId}`);
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $push: { groups: group._id }
+    });
+
+    // Redirect to dashboard with groupId in query string
+    res.redirect(`/dashboard?groupCreated=${groupId}`);
   } catch (err) {
     console.error(err);
     res.redirect('/dashboard');
   }
 };
+
 
 exports.getGroupChat = async (req, res) => {
   const groupId = req.params.groupId;
