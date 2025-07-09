@@ -18,11 +18,7 @@ exports.postCreateGroup = async (req, res) => {
     });
 
     await group.save();
-
-    const user = await User.findById(req.user._id);
-    user.groups.push(group._id);
-    await user.save();
-
+    
     res.redirect(`/group/${groupId}`);
   } catch (err) {
     console.error(err);

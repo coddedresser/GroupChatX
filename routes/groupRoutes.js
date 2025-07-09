@@ -1,5 +1,5 @@
 const express = require('express');
-const router = express.Router();
+const router=express.Router();
 const groupController = require('../controllers/groupController');
 const isAuthenticated=require('../middlewares/auth');
 
@@ -12,5 +12,5 @@ const isAuthenticated=require('../middlewares/auth');
 router.get('/create', isAuthenticated, groupController.getCreateGroup);
 router.post('/create', isAuthenticated, groupController.postCreateGroup);
 router.get('/:groupId', isAuthenticated, groupController.getGroupChat);
-
+console.log('Router debug type:', router.constructor?.name);
 module.exports = router;
